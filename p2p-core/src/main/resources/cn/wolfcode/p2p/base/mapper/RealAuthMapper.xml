@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="cn.wolfcode.p2p.base.mapper.RealAuthMapper">
+    <resultMap id="BaseResultMap" type="cn.wolfcode.p2p.base.domain.RealAuth">
+        <id column="id" property="id"/>
+        <result column="realName" property="realName"/>
+        <result column="sex" property="sex"/>
+        <result column="bornDate" property="bornDate"/>
+        <result column="idNumber" property="idNumber"/>
+        <result column="address" property="address"/>
+        <result column="state" property="state"/>
+        <result column="image1" property="image1"/>
+        <result column="image2" property="image2"/>
+        <result column="remark" property="remark"/>
+        <result column="auditTime" property="auditTime"/>
+        <result column="applyTime" property="applyTime"/>
+        <!-- 申请人 -->
+        <association property="applierId" javaType="cn.wolfcode.p2p.base.domain.LoginInfo">
+            <id column="app_id" property="id"/>
+            <result column="app_username" property="username"/>
+        </association>
+        <!-- 审核人 -->
+        <association property="auditorId" javaType="cn.wolfcode.p2p.base.domain.LoginInfo"
+                     columnPrefix="aud_" resultMap="cn.wolfcode.p2p.base.mapper.LoginInfoMapper.singleBaseMap"/>
+    </resultMap>
+    <insert id="insert" parameterType="cn.wolfcode.p2p.base.domain.RealAuth" useGeneratedKeys="true" keyProperty="id">
+    insert into realauth (realName, sex, bornDate, idNumber, address, state, image1, 
+      image2, remark, auditTime, applyTime, auditorId, applierId)
+    values (#{realName}, #{sex}, #{bornDate}, #{idNumber}, #{address}, #{state}, #{image1}, 
+      #{image2}, #{remark}, #{auditTime}, #{applyTime}, #{auditorId.id}, #{applierId.id})
+  </insert>
+    <update id="updateByPrimaryKey" parameterType="cn.wolfcode.p2p.base.domain.RealAuth">
+    update realauth
+    set realName = #{realName},
+      sex = #{sex},
+      bornDate = #{bornDate},
+      idNumber = #{idNumber},
+      address = #{address},
+      state = #{state},
+      image1 = #{image1},
+      image2 = #{image2},
+      remark = #{remark},
+      auditTime = #{auditTime},
+      applyTime = #{applyTime},
+      auditorId = #{auditorId.id},
+      applierId = #{applierId.id}
+    where id = #{id}
+  </update>
+    <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.Long">
+    select ra.id, ra.realName, ra.sex, ra.bornDate, ra.idNumber, ra.address, ra.state, ra.image1, ra.image2, ra.remark,
+    ra.auditTime, ra.applyTime,
+    app.id app_id,app.username app_username,
+    aud.id aud_id,aud.username aud_username
+    from realauth ra join logininfo app on ra.applierId = app.id
+    left join logininfo aud on ra.auditorId = aud.id
+    where ra.id = #{id}
+  </select>
+    <select id="selectAll" resultMap="BaseResultMap">
+    select id, realName, sex, bornDate, idNumber, address, state, image1, image2, remark,
+    auditTime, applyTime, auditorId, applierId
+    from realauth
+  </select>
+
+    <!-- 共用条件 -->
+    <sql id="baseSql">
+        <where>
+            <if test="state != -1">
+                and ra.state = #{state}
+            </if>
+            <if test="beginDate != null">
+                and ra.auditTime &gt;= #{beginDate}
+            </if>
+            <if test="endDate != null">
+                and ra.auditTime &lt;= #{endDate}
+            </if>
+        </where>
+    </sql>
+    <!-- 后台高级查询总条数 -->
+    <select id="queryForCount" resultType="java.lang.Integer">
+        select count(ra.id)
+        from realauth ra
+        <include refid="baseSql"/>
+    </select>
+    <!-- 后台高级查询总数据 -->
+    <select id="queryForList" resultMap="BaseResultMap">
+        select ra.id, ra.realName, ra.sex, ra.bornDate, ra.idNumber, ra.address, ra.state, ra.image1, ra.image2, ra.remark,
+        ra.auditTime, ra.applyTime,
+        app.id app_id,app.username app_username,
+        aud.id aud_id,aud.username aud_username
+        from realauth ra join logininfo app on ra.applierId = app.id
+             left join logininfo aud on ra.auditorId = aud.id
+        <include refid="baseSql"/>
+        limit #{beginIndex},#{pageSize}
+    </select>
+</mapper>

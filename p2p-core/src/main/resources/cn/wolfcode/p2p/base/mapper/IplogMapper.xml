@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="cn.wolfcode.p2p.base.mapper.IplogMapper" >
+  <resultMap id="BaseResultMap" type="cn.wolfcode.p2p.base.domain.Iplog" >
+    <id column="id" property="id" />
+    <result column="ip" property="ip" />
+    <result column="state" property="state" />
+    <result column="username" property="username" />
+    <result column="loginTime" property="loginTime" />
+    <result column="userType" property="userType" />
+  </resultMap>
+  <!-- 添加记录: -->
+  <insert id="insert" parameterType="cn.wolfcode.p2p.base.domain.Iplog" useGeneratedKeys="true" keyProperty="id" >
+    insert into iplog (ip, state, username, loginTime, userType)
+    values (#{ip}, #{state}, #{username}, #{loginTime}, #{userType})
+  </insert>
+
+    <!-- 高级查询共用sql -->
+    <sql id="baseSql">
+        <where>
+            <if test="1 == 1">
+                and username = #{username}
+            </if>
+            <if test="beginTime != null">
+                and loginTime >= #{beginTime}
+            </if>
+            <if test="endTime != null">
+                and loginTime &lt;= #{endTime}
+            </if>
+            <if test="state != -1">
+                and state=#{state}
+            </if>
+        </where>
+    </sql>
+
+  <!-- 高级查询总条数 -->
+  <select id="queryForCount" resultType="java.lang.Integer">
+      select count(id)
+      from iplog
+      <include refid="baseSql"/>
+  </select>
+
+  <!-- 高级查询总数据 -->
+  <select id="queryForList" resultMap="BaseResultMap">
+      select id, ip, state, username, loginTime, userType
+      from iplog
+      <include refid="baseSql"/>
+      limit #{beginIndex},#{pageSize}
+  </select>
+</mapper>

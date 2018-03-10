@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  <mapper namespace="cn.wolfcode.p2p.base.mapper.LoginInfoMapper">
+    <!-- 实名认证时候用的映射: -->
+    <resultMap id="singleBaseMap" type="cn.wolfcode.p2p.base.domain.LoginInfo">
+        <id column="id" property="id" />
+        <result column="username" property="username" />
+    </resultMap>
+
+	<!-- 添加一条数据  -->
+    <insert id="insert" keyColumn="id" keyProperty="id" useGeneratedKeys="true">
+		insert into logininfo(username,password,state,userType) VALUE (#{username},#{password},#{state},#{userType})
+	</insert>
+    <!-- 注册时,效验用户名是否存在: -->
+    <select id="checkUsername" resultType="int">
+        select count(*) from logininfo where username=#{username}
+    </select>
+    <!-- 用户登录查询 -->
+    <select id="login" resultType="cn.wolfcode.p2p.base.domain.LoginInfo">
+        select id,username,password,state
+        from logininfo
+        where username=#{username} and password = #{password}
+    </select>
+
+    <!-- 自动补全 -->
+    <select id="getAuthListByUsername" resultType="java.util.Map">
+        select id,username
+        from logininfo
+        where username like concat(#{username},'%')
+    </select>
+</mapper>

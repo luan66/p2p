@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="cn.wolfcode.p2p.base.mapper.SystemDictionaryItemMapper" >
+  <resultMap id="BaseResultMap" type="cn.wolfcode.p2p.base.domain.SystemDictionaryItem" >
+    <id column="id" property="id" />
+    <result column="parentId" property="parentId" />
+    <result column="title" property="title" />
+    <result column="sequence" property="sequence" />
+  </resultMap>
+
+  <insert id="insert" parameterType="cn.wolfcode.p2p.base.domain.SystemDictionaryItem" useGeneratedKeys="true" keyProperty="id" >
+    insert into systemdictionaryitem (parentId, title, sequence)
+    values (#{parentId}, #{title}, #{sequence})
+  </insert>
+  <update id="updateByPrimaryKey" parameterType="cn.wolfcode.p2p.base.domain.SystemDictionaryItem" >
+    update systemdictionaryitem
+    set parentId = #{parentId},
+      title = #{title},
+      sequence = #{sequence}
+    where id = #{id}
+  </update>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap">
+    select id, parentId, title, sequence
+    from systemdictionaryitem
+    where id=#{id}
+  </select>
+  <select id="selectAll" resultMap="BaseResultMap" >
+    select id, parentId, title, sequence
+    from systemdictionaryitem
+  </select>
+  <!-- 根据编号查询明细 -->
+  <select id="getItemListBydirSn" resultMap="BaseResultMap">
+    select item.id, item.parentId, item.title, item.sequence
+    from systemdictionaryitem item join systemdictionary dir on item.parentId=dir.id
+    where dir.sn=#{sn}
+  </select>
+
+  <!-- 高级查询sql -->
+  <sql id="baseSql">
+    <where>
+      <if test="parentId != -1">
+        and dir.id = #{parentId}
+      </if>
+      <if test="keyword != null and keyword != ''">
+        and item.title like concat('%',#{keyword},'%')
+      </if>
+    </where>
+  </sql>
+
+  <!-- 高级查询 -->
+  <select id="queryForCount" resultType="java.lang.Integer">
+    select count(*)
+    from systemdictionaryitem item join systemdictionary dir on item.parentId = dir.id
+    <include refid="baseSql"/>
+  </select>
+  <!-- 高级查询 -->
+  <select id="queryForList" resultMap="BaseResultMap">
+    select item.id, item.parentId, item.title, item.sequence
+    from systemdictionaryitem item join systemdictionary dir on item.parentId=dir.id
+    <include refid="baseSql"/>
+    limit #{beginIndex},#{pageSize}
+  </select>
+</mapper>

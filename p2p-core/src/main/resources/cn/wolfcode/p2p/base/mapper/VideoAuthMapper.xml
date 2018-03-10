@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="cn.wolfcode.p2p.base.mapper.VideoAuthMapper" >
+  <resultMap id="BaseResultMap" type="cn.wolfcode.p2p.base.domain.VideoAuth" >
+    <id column="id" property="id" />
+    <result column="state" property="state" />
+    <result column="remark" property="remark" />
+    <result column="auditTime" property="auditTime" />
+    <result column="applyTime" property="applyTime" />
+    <!-- 申请人 -->
+    <association property="applierId" javaType="cn.wolfcode.p2p.base.domain.LoginInfo">
+      <id column="app_id" property="id"/>
+      <result column="app_username" property="username"/>
+    </association>
+    <!-- 审核人 -->
+    <association property="auditorId" javaType="cn.wolfcode.p2p.base.domain.LoginInfo"
+                 columnPrefix="aud_" resultMap="cn.wolfcode.p2p.base.mapper.LoginInfoMapper.singleBaseMap"/>
+
+  </resultMap>
+  <insert id="insert" parameterType="cn.wolfcode.p2p.base.domain.VideoAuth" useGeneratedKeys="true" keyProperty="id" >
+    insert into videoauth (state, remark, auditTime, applyTime, auditorId, applierId
+      )
+    values (#{state}, #{remark}, #{auditTime}, #{applyTime}, #{auditorId.id}, #{applierId.id}
+      )
+  </insert>
+
+  <!-- 共用条件 -->
+  <sql id="baseSql">
+    <where>
+      <if test="state != -1">
+        and va.state = #{state}
+      </if>
+      <if test="beginDate != null">
+        and va.applyTime &gt;= #{beginDate}
+      </if>
+      <if test="endDate != null">
+        and va.applyTime &lt;= #{endDate}
+      </if>
+    </where>
+  </sql>
+
+  <!-- 总数据 -->
+  <select id="queryForCount" resultType="java.lang.Integer">
+    select count(id)
+    from videoauth va
+    <include refid="baseSql"/>
+  </select>
+
+  <!-- 查询的数据集合 -->
+  <select id="queryForList" resultMap="BaseResultMap">
+    select va.id, va.state, va.remark, va.auditTime, va.applyTime,
+           app.id app_id,app.username app_username,
+           aud.id aud_id,aud.username aud_username
+    from videoauth va join logininfo app on va.applierId = app.id
+    left join logininfo aud on va.auditorId = aud.id
+    <include refid="baseSql"/>
+    limit #{beginIndex},#{pageSize}
+  </select>
+</mapper>

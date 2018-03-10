@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="cn.wolfcode.p2p.base.mapper.UserFileMapper" >
+  <resultMap id="BaseResultMap" type="cn.wolfcode.p2p.base.domain.UserFile" >
+    <id column="id" property="id" />
+    <result column="state" property="state" />
+    <result column="remark" property="remark" />
+    <result column="auditTime" property="auditTime" />
+    <result column="applyTime" property="applyTime" />
+    <result column="score" property="score" />
+    <result column="image" property="image" />
+    <!-- 申请人 -->
+    <association property="applierId" javaType="cn.wolfcode.p2p.base.domain.LoginInfo" columnPrefix="ap_">
+      <id column="id" property="id"/>
+      <result column="username" property="username"/>
+    </association>
+    <!-- 审核人 -->
+    <association property="auditorId" javaType="cn.wolfcode.p2p.base.domain.LoginInfo" columnPrefix="au_">
+      <id column="id" property="id"/>
+      <result column="username" property="username"/>
+    </association>
+    <!-- 材料分类 -->
+    <association property="fileTypeId" javaType="cn.wolfcode.p2p.base.domain.SystemDictionaryItem" columnPrefix="item_">
+      <id column="id" property="id"/>
+      <result column="title" property="title"/>
+    </association>
+  </resultMap>
+
+  <insert id="insert" parameterType="cn.wolfcode.p2p.base.domain.UserFile" useGeneratedKeys="true" keyProperty="id" >
+    insert into userfile (state, remark, auditTime, applyTime, auditorId, applierId, 
+      score, image, fileTypeId)
+    values (#{state}, #{remark}, #{auditTime}, #{applyTime}, #{auditorId.id}, #{applierId.id},
+      #{score}, #{image}, #{fileTypeId.id})
+  </insert>
+  <update id="updateByPrimaryKey" parameterType="cn.wolfcode.p2p.base.domain.UserFile" >
+    update userfile
+    set state = #{state},
+      remark = #{remark},
+      auditTime = #{auditTime},
+      applyTime = #{applyTime},
+      auditorId = #{auditorId.id},
+      applierId = #{applierId.id},
+      score = #{score},
+      image = #{image},
+      fileTypeId = #{fileTypeId.id}
+    where id = #{id}
+  </update>
+
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.Long" >
+    select uf.id, uf.state, uf.remark, uf.auditTime, uf.applyTime, uf.score, uf.image,
+            ap.id ap_id, ap.username ap_username,
+            au.id au_id, au.username au_username,
+            item.id item_id,item.title item_title
+    from userfile uf join logininfo ap on uf.applierId=ap.id
+          left join logininfo au on uf.auditorId=au.id
+          left join systemdictionaryitem item on uf.fileTypeId=item.id
+    where uf.id = #{id}
+  </select>
+  <select id="selectAll" resultMap="BaseResultMap" >
+    select uf.id, uf.state, uf.remark, uf.auditTime, uf.applyTime, uf.score, uf.image,
+            ap.id ap_id, ap.username ap_username,
+            au.id au_id, au.username au_username,
+            item.id item_id,item.title item_title
+    from userfile uf join logininfo ap on uf.applierId=ap.id
+          left join logininfo au on uf.auditorId=au.id
+          left join systemdictionaryitem item on uf.fileTypeId=item.id
+  </select>
+  <!-- 查询有分类的: -->
+  <select id="queryHashType" resultMap="BaseResultMap">
+    select uf.id, uf.state, uf.remark, uf.auditTime, uf.applyTime, uf.score, uf.image,
+            ap.id ap_id, ap.username ap_username,
+            au.id au_id, au.username au_username,
+            item.id item_id,item.title item_title
+    from userfile uf join logininfo ap on uf.applierId=ap.id
+          left join logininfo au on uf.auditorId=au.id
+          left join systemdictionaryitem item on uf.fileTypeId=item.id
+    where ap.id=#{userId}
+    <if test="idType">
+      and uf.fileTypeId is not null
+    </if>
+    <if test="!idType">
+      and uf.fileTypeId is null
+    </if>
+  </select>
+
+  <!-- 高级查询 -->
+  <!-- 共用条件 -->
+  <sql id="baseSql">
+    <where>
+      <if test="state != -1">
+        and uf.state = #{state}
+      </if>
+      <if test="beginDate != null">
+        and uf.applyTime &gt;= #{beginDate}
+      </if>
+      <if test="endDate != null">
+        and uf.applyTime &lt;= #{endDate}
+      </if>
+      <if test="userId != null">
+        and uf.applierId = #{userId}
+      </if>
+    </where>
+  </sql>
+
+  <!-- 总条数 -->
+  <select id="queryForCount" resultType="java.lang.Integer">
+      select count(uf.id)
+      from userfile uf
+      <include refid="baseSql"/>
+  </select>
+  <!-- 总数据 -->
+  <select id="queryForList" resultMap="BaseResultMap">
+      select uf.id, uf.state, uf.remark, uf.auditTime, uf.applyTime, uf.score, uf.image,
+              ap.id ap_id, ap.username ap_username,
+              item.id item_id,item.title item_title
+      from userfile uf join logininfo ap on uf.applierId=ap.id
+            left join systemdictionaryitem item on uf.fileTypeId=item.id
+      <include refid="baseSql"/>
+      limit #{beginIndex},#{pageSize}
+  </select>
+</mapper>

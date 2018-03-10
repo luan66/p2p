@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="cn.wolfcode.p2p.business.mapper.RechargeMapper" >
+  <resultMap id="BaseResultMap" type="cn.wolfcode.p2p.business.domain.Recharge" >
+    <id column="id" property="id" />
+    <result column="state" property="state" />
+    <result column="remark" property="remark" />
+    <result column="auditTime" property="auditTime" />
+    <result column="applyTime" property="applyTime" />
+    <result column="tradeCode" property="tradeCode" />
+    <result column="tradeTime" property="tradeTime" />
+    <result column="amount" property="amount" />
+    <result column="note" property="note" />
+    <!-- 申请人 -->
+    <association property="applierId" javaType="cn.wolfcode.p2p.base.domain.LoginInfo"
+                 columnPrefix="app_" resultMap="cn.wolfcode.p2p.base.mapper.LoginInfoMapper.singleBaseMap"/>
+    <!-- 审核人 -->
+    <association property="auditorId" javaType="cn.wolfcode.p2p.base.domain.LoginInfo"
+                 columnPrefix="aud_" resultMap="cn.wolfcode.p2p.base.mapper.LoginInfoMapper.singleBaseMap"/>
+    <!-- 银行信息: -->
+    <association property="bankInfoId" javaType="cn.wolfcode.p2p.business.domain.PlatformBankInfo"
+                 columnPrefix="pb_" resultMap="cn.wolfcode.p2p.business.mapper.PlatformBankInfoMapper.BaseResultMap"/>
+  </resultMap>
+  <insert id="insert" parameterType="cn.wolfcode.p2p.business.domain.Recharge" useGeneratedKeys="true" keyProperty="id" >
+    insert into recharge (state, remark, auditTime, applyTime, auditorId, applierId, 
+      tradeCode, tradeTime, amount, note, bankInfoId)
+    values (#{state}, #{remark}, #{auditTime}, #{applyTime}, #{auditorId.id}, #{applierId.id},
+      #{tradeCode}, #{tradeTime}, #{amount}, #{note}, #{bankInfoId.id})
+  </insert>
+  <update id="updateByPrimaryKey" parameterType="cn.wolfcode.p2p.business.domain.Recharge" >
+    update recharge
+    set state = #{state},
+      remark = #{remark},
+      auditTime = #{auditTime},
+      applyTime = #{applyTime},
+      auditorId = #{auditorId.id},
+      applierId = #{applierId.id},
+      tradeCode = #{tradeCode},
+      tradeTime = #{tradeTime},
+      amount = #{amount},
+      note = #{note},
+      bankInfoId = #{bankInfoId.id}
+    where id = #{id}
+  </update>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.Long" >
+    select re.id,
+    re.state,
+    re.remark,
+    re.auditTime,
+    re.applyTime,
+    re.tradeCode,
+    re.tradeTime,
+    re.amount,
+    re.note,
+    app.id app_id,app.username app_username,
+    aud.id aud_id,aud.username aud_username,
+    pb.id pb_id,pb.bankName pb_bankName,pb.accountName pb_accountName,pb.accountNumber pb_accountNumber,pb.bankForkName pb_bankForkName
+    from recharge re join logininfo app on re.applierId = app.id
+         left join logininfo aud on re.auditorId= aud.id
+         join platformbankinfo pb on re.bankInfoId = pb.id
+    where re.id = #{id}
+  </select>
+
+  <!-- 高级查询 -->
+  <sql id="baseSql">
+    <where>
+      <if test="state != -1">
+        and re.state = #{state}
+      </if>
+      <if test="bankInfoId != -1">
+        and re.bankInfoId = #{bankInfoId}
+      </if>
+      <if test="tradeCode != null and tradeCode != ''">
+        and re.tradeCode = #{tradeCode}
+      </if>
+      <if test="beginDate != null" >
+        and re.tradeTime &gt; #{beginDate}}
+      </if>
+      <if test="endDate != null">
+        and re.tradeTime &lt; #{endDate}}
+      </if>
+    </where>
+  </sql>
+
+  <!-- 高级查询 -->
+  <select id="queryForCount" resultType="java.lang.Integer">
+    select count(*)
+    from recharge re join logininfo app on re.applierId = app.id
+         left join logininfo aud on re.auditorId= aud.id
+         join platformbankinfo pb on re.bankInfoId = pb.id
+    <include refid="baseSql"/>
+  </select>
+  <!-- 高级查询 -->
+  <select id="queryForList" resultMap="BaseResultMap">
+    select re.id,
+    re.state,
+    re.remark,
+    re.auditTime,
+    re.applyTime,
+    re.tradeCode,
+    re.tradeTime,
+    re.amount,
+    re.note,
+    app.id app_id,app.username app_username,
+    aud.id aud_id,aud.username aud_username,
+    pb.id pb_id,pb.bankName pb_bankName,pb.accountName pb_accountName,pb.accountNumber pb_accountNumber,pb.bankForkName pb_bankForkName
+    from recharge re join logininfo app on re.applierId = app.id
+         left join logininfo aud on re.auditorId= aud.id
+         join platformbankinfo pb on re.bankInfoId = pb.id
+    <include refid="baseSql"/>
+    limit #{beginIndex},#{pageSize}
+</select>
+</mapper>

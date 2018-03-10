@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.wolfcode.p2p.business.mapper.BidMapper">
+
+    <resultMap id="BaseResultMap" type="cn.wolfcode.p2p.business.domain.Bid">
+        <id column="id" property="id"/>
+        <result column="actualRate" property="actualRate"/>
+        <result column="availableAmount" property="availableAmount"/>
+        <result column="bidRequestId" property="bidRequestId"/>
+        <result column="bidTime" property="bidTime"/>
+        <result column="bidRequestTitle" property="bidRequestTitle"/>
+        <result column="bidRequestState" property="bidRequestState"/>
+        <!-- 投资人 -->
+        <association property="bidUserId" columnPrefix="aud_"
+                     resultMap="cn.wolfcode.p2p.base.mapper.LoginInfoMapper.singleBaseMap"/>
+
+    </resultMap>
+    <delete id="deleteByPrimaryKey" parameterType="java.lang.Long">
+    delete from bid
+    where id = #{id}
+  </delete>
+    <insert id="insert" keyProperty="id" parameterType="cn.wolfcode.p2p.business.domain.Bid" useGeneratedKeys="true">
+    insert into bid (actualRate, availableAmount, bidRequestId, bidUserId, bidTime, 
+      bidRequestTitle, bidRequestState)
+    values (#{actualRate}, #{availableAmount}, #{bidRequestId}, #{bidUserId.id}, #{bidTime},
+      #{bidRequestTitle}, #{bidRequestState})
+  </insert>
+    <update id="updateByPrimaryKey" parameterType="cn.wolfcode.p2p.business.domain.Bid">
+    update bid
+    set actualRate = #{actualRate},
+      availableAmount = #{availableAmount},
+      bidRequestId = #{bidRequestId},
+      bidUserId = #{bidUserId.id},
+      bidTime = #{bidTime},
+      bidRequestTitle = #{bidRequestTitle},
+      bidRequestState = #{bidRequestState}
+    where id = #{id}
+  </update>
+    <!-- 修改状态 -->
+    <update id="updateStateByBidRequestId">
+    update bid
+    set bidRequestState = #{state}
+    where bidRequestId = #{bidRequestId}
+  </update>
+    <select id="selectByPrimaryKey" parameterType="java.lang.Long" resultMap="BaseResultMap">
+    select b.id, b.actualRate, b.availableAmount, b.bidRequestId, b.bidTime, b.bidRequestTitle,b.bidRequestState,
+    aud.id aud_id,aud.username aud_username
+    from bid b join logininfo aud on b.bidUserId=aud.id
+    where b.id = #{id}
+  </select>
+  <select id="selectAll" resultMap="BaseResultMap">
+    select b.id, b.actualRate, b.availableAmount, b.bidRequestId, b.bidTime, b.bidRequestTitle,b.bidRequestState,
+    aud.id aud_id,aud.username aud_username
+    from bid b join logininfo aud on b.bidUserId=aud.id
+  </select>
+    <!-- 根据借款人ID查询投资投资人 -->
+  <select id="listByBidRequestKId" resultMap="BaseResultMap">
+    select b.id, b.actualRate, b.availableAmount, b.bidRequestId, b.bidTime, b.bidRequestTitle,b.bidRequestState,
+    aud.id aud_id,aud.username aud_username
+    from bid b join logininfo aud on b.bidUserId=aud.id
+    where bidRequestId = #{id}
+  </select>
+</mapper>
